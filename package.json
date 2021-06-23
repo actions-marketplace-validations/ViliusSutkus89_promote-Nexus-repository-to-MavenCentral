@@ -22,7 +22,7 @@
     "node",
     "setup"
   ],
-  "author": "",
+  "author": "Vilius Sutkus <ViliusSutkus89@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.2.6"
