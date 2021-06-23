@@ -1,6 +1,6 @@
-name: 'Your name here'
+name: 'promote-Nexus-repository-to-MavenCentral'
 description: 'Provide a description here'
-author: 'Your name or organization here'
+author: "Vilius Sutkus '89"
 inputs:
   milliseconds: # change this
     required: true
