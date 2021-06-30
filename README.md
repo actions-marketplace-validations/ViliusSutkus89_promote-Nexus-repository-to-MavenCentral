@@ -8,8 +8,7 @@ I had a need to promote a staging repository in Sonatype Nexus to MavenCentral.
 Based on [promoteStagingRepository](https://github.com/ViliusSutkus89/Sample_Android_Library-MavenCentral-Instrumented_Tests/blob/75c32f434c9cf8befb4da727ae744c2aed1377e2/ci-scripts/promoteStagingRepository) perl script, packaged as GitHub action.
 
 Method of operation:
-1) Accept repository URI input (example `https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1199/content/`),
-extract Sonatype URI (`https://oss.sonatype.org/service/local/`) and repositoryId (`comviliussutkus89-1199`)
+1) Extract Sonatype URI (`https://oss.sonatype.org/service/local/`) and repositoryID (`comviliussutkus89-1199`) from supplied repository URI (`https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1199/content/`)
 2) Query `https://oss.sonatype.org/service/local/staging/repository/comviliussutkus89-1199` to obtain profileID
 3) Send promote request to `https://oss.sonatype.org/service/local/staging/profiles/${profileId}/promote`
 
