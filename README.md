@@ -1,105 +1,65 @@
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+# Promote a staging Nexus repository to MavenCentral
+[![build](https://github.com/ViliusSutkus89/promote-Nexus-repository-to-MavenCentral/actions/workflows/build.yml/badge.svg)](https://github.com/ViliusSutkus89/promote-Nexus-repository-to-MavenCentral/actions/workflows/build.yml)
 
-# Create a JavaScript Action using TypeScript
+## The why
+I had a need to promote a staging repository in Sonatype Nexus to MavenCentral.  
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+## The how
+Based on [promoteStagingRepository](https://github.com/ViliusSutkus89/Sample_Android_Library-MavenCentral-Instrumented_Tests/blob/75c32f434c9cf8befb4da727ae744c2aed1377e2/ci-scripts/promoteStagingRepository) perl script, packaged as GitHub action.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+Method of operation:
+1) Accept repository URI input (example `https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1199/content/`),
+extract Sonatype URI (`https://oss.sonatype.org/service/local/`) and repositoryId (`comviliussutkus89-1199`)
+2) Query `https://oss.sonatype.org/service/local/staging/repository/comviliussutkus89-1199` to obtain profileID
+3) Send promote request to `https://oss.sonatype.org/service/local/staging/profiles/${profileId}/promote`
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
-
-## Create an action from this template
-
-Click the `Use this Template` and provide the new repo details for your action
-
-## Code in Main
-
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
-
-Install the dependencies  
-```bash
-$ npm install
-```
-
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
-```
-
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml contains defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
+## Example workflow
 
 ```yaml
-uses: ./
-with:
-  milliseconds: 1000
+name: buildMyLibrary
+on: push
+
+jobs:
+  build:
+    environment: BuildWithDeployToSonatype
+    outputs:
+      STAGING_REPO_URI: ${{ steps.sonatype.outputs.stagingRepoUri }}
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: 8
+      - uses: android-actions/setup-android@v2
+
+      - run: ./gradlew assembleRelease
+
+      - name: 'Publish to Sonatype'
+        run: ./gradlew publishToSonatype closeSonatypeStagingRepository | tee publishToSonatype.log
+        # bash has pipefail on by default, which is needed for tee to fail, if gradle fails
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASS: ${{ secrets.SIGNING_PASS }}
+
+      - name: 'Parse Sonatype repository'
+        id: sonatype
+        # publishToSonatype.log contains a line looking like this:
+        # Created staging repository 'comviliussutkus89-1055' at https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1055/content/
+        run: perl -ne 'print "::set-output name=stagingRepoUri::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
+
+  releaseSonatype:
+    # Different environment, for manual approval gate
+    environment: ReleaseSonatype
+    needs: build
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: ViliusSutkus89/promote-Nexus-repository-to-MavenCentral@v1
+        with:
+          repositoryURI: ${{ needs.build.outputs.STAGING_REPO_URI }}
+          sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}  
 ```
-
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
-
-## Usage:
-
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
