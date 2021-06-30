@@ -1,11 +1,29 @@
 name: 'promote-Nexus-repository-to-MavenCentral'
-description: 'Provide a description here'
+description: 'Promote a staging Nexus repository to MavenCentral'
 author: "Vilius Sutkus '89"
 inputs:
-  milliseconds: # change this
+  repositoryURI:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'Example: https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1208/content/'
+
+  sonatypeUsername:
+    required: true
+    description: 'Username part of the access token generated in oss.sonatype.org'
+
+  sonatypePassword:
+    required: true
+    description: 'Password part of the access token generated in oss.sonatype.org'
+
+  printResponseBodyInErrors:
+    required: false
+    description: 'Responses from Sonatype may contain sensitive data, should it be printed with errors?'
+    default: 'false'
+
+  censorProfileId:
+    required: false
+    description: 'ProfileID may be sensitive data'
+    default: 'true'
+
 runs:
   using: 'node12'
   main: 'dist/index.js'

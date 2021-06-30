@@ -1,18 +1,20 @@
-import * as core from '@actions/core'
-import {wait} from './wait'
+import {getInput, setFailed, setSecret} from '@actions/core'
+import {Buffer} from 'buffer'
+import {SonatypeClient} from './SonatypeClient'
 
 async function run(): Promise<void> {
+  const user = getInput('sonatypeUsername')
+  const pass = getInput('sonatypePassword')
+  const userPass = `${user}:${pass}`
+  const userPassBase64 = Buffer.from(userPass).toString('base64')
+  setSecret(userPassBase64)
+  const authorizationHeader = `Basic ${userPassBase64}`
+  const repositoryURI = getInput('repositoryURI')
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
+    const sc = new SonatypeClient(repositoryURI, authorizationHeader)
+    await sc.sendPromoteRequest()
   } catch (error) {
-    core.setFailed(error.message)
+    setFailed(error)
   }
 }
 

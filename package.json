@@ -1,8 +1,8 @@
 {
   "name": "promote-nexus-repository-to-mavencentral",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": false,
-  "description": "TypeScript template action",
+  "description": "Promote a staging Nexus repository to MavenCentral",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -18,18 +18,21 @@
     "url": "git+https://github.com/ViliusSutkus89/promote-Nexus-repository-to-MavenCentral.git"
   },
   "keywords": [
-    "actions",
-    "node",
-    "setup"
+    "Nexus",
+    "Sonatype",
+    "MavenCentral"
   ],
   "author": "Vilius Sutkus <ViliusSutkus89@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.2.6"
+    "@actions/core": "^1.4.0",
+    "Buffer": "0.0.0",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@types/jest": "^26.0.15",
     "@types/node": "^14.14.9",
+    "@types/xml2js": "^0.4.8",
     "@typescript-eslint/parser": "^4.8.1",
     "@vercel/ncc": "^0.25.1",
     "eslint": "^7.17.0",
