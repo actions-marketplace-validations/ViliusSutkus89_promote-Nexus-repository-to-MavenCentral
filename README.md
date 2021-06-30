@@ -8,7 +8,7 @@ I had a need to promote a staging repository in Sonatype Nexus to MavenCentral.
 Based on [promoteStagingRepository](https://github.com/ViliusSutkus89/Sample_Android_Library-MavenCentral-Instrumented_Tests/blob/75c32f434c9cf8befb4da727ae744c2aed1377e2/ci-scripts/promoteStagingRepository) perl script, packaged as GitHub action.
 
 Method of operation:
-1) Extract Sonatype URI (`https://oss.sonatype.org/service/local/`) and repositoryID (`comviliussutkus89-1199`) from supplied repository URI (`https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1199/content/`)
+1) Extract Sonatype URI (`https://oss.sonatype.org/service/local/`) and repository ID (`comviliussutkus89-1199`) from supplied repository URI (`https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1199/content/`)
 2) Query `https://oss.sonatype.org/service/local/staging/repository/comviliussutkus89-1199` to obtain profileID
 3) Send promote request to `https://oss.sonatype.org/service/local/staging/profiles/${profileId}/promote`
 
@@ -62,3 +62,13 @@ jobs:
           sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
           sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}  
 ```
+
+## Inputs
+Required inputs are:
+- repositoryURI: Example: https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1208/content/
+- sonatypeUsername: Username part of the access token generated in oss.sonatype.org
+- sonatypePassword: Password part of the access token generated in oss.sonatype.org
+
+Optional inputs are:
+- printResponseBodyInErrors: Responses from Sonatype may contain sensitive data, should it be printed when printing errors? Defaults to 'false'
+- censorProfileId: ProfileID may be sensitive data. Should it be excluded from the debug log? Defaults to 'true'
