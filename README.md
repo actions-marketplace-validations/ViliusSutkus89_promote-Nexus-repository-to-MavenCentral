@@ -70,5 +70,5 @@ Required inputs are:
 - sonatypePassword: Password part of the access token generated in oss.sonatype.org
 
 Optional inputs are:
-- printResponseBodyInErrors: Responses from Sonatype may contain sensitive data, should it be printed when printing errors? Defaults to 'false'
-- censorProfileId: ProfileID may be sensitive data. Should it be excluded from the debug log? Defaults to 'true'
+- printResponseBodyInErrors: Responses from Sonatype may contain sensitive data, should it be printed when printing errors? Defaults to 'false' (yes, this is a string, not a boolean).
+- censorProfileId: ProfileID may be sensitive data. Should it be excluded from the debug log? Defaults to 'true' (yes, this is a string, not a boolean).
