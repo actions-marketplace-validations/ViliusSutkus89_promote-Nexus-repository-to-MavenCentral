@@ -68,10 +68,7 @@ export class SonatypeClient {
     const profileId = await this.getProfileId()
     if (getBooleanInput('censorProfileId')) {
       setSecret(profileId)
-    } else {
-      debug(`Obtained profileId: ${profileId}`)
     }
-
     const uri = `${this.sonatypeURI}staging/profiles/${profileId}/promote`
     const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`
     const options = {
