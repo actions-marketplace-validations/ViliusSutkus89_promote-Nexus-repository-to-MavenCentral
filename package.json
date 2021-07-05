@@ -29,7 +29,7 @@
     "@actions/core": "^1.4.0",
     "axios": "^0.21.1",
     "Buffer": "0.0.0",
-    "parse-apache-directory-index": "ViliusSutkus89/parse-apache-directory-index#20f1489b8690ba8b1731b753f741701a6ac4ef81",
+    "parse-apache-directory-index": "git+https://www.github.com/ViliusSutkus89/parse-apache-directory-index#20f1489b8690ba8b1731b753f741701a6ac4ef81",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
