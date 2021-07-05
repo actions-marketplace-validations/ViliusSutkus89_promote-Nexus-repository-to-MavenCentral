@@ -1,5 +1,5 @@
 import {getInput, debug, setSecret} from '@actions/core'
-import https from 'https'
+import axios, {AxiosResponse} from 'axios'
 import {parseStringPromise} from 'xml2js'
 
 function getBooleanInput(inputName: string): boolean {
@@ -51,10 +51,10 @@ export class SonatypeClient {
         const url = `${this.sonatypeURI}staging/repository/${this.repositoryId}`
         let XMLData
         try {
-          XMLData = await this.HTTPSRequest(url, {
-            method: 'GET',
+          const response: AxiosResponse = await axios.get(url, {
             headers: {Authorization: this.authorizationHeader}
           })
+          XMLData = response.data
         } catch (err) {
           reject(err)
           return
@@ -124,61 +124,12 @@ export class SonatypeClient {
       }
 
       try {
-        await this.HTTPSRequest(url, options, POSTData)
+        await axios.post(url, POSTData, options)
         resolve()
       } catch (err) {
         const msg = `Failed to send promote request!\n${err.message}`
         reject(new Error(msg))
       }
-    })
-  }
-
-  private async HTTPSRequest(
-    uri: string,
-    options: https.RequestOptions,
-    data?: string
-  ): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      debug(`HTTPSRequest: ${options.method} ${uri}`)
-      const request = https.request(uri, options, res => {
-        let receivedData = ''
-        res.on('data', chunk => {
-          receivedData += chunk
-        })
-
-        const rejectWrapper = (errMsg: string): void => {
-          let msg =
-            `Failed to ${options.method} ${uri}!\n` +
-            `HTTP status code: ${res.statusCode}\n` +
-            `${errMsg}\n`
-          if (getBooleanInput('printResponseBodyInErrors')) {
-            msg += receivedData
-          }
-          reject(new Error(msg))
-        }
-
-        res.on('end', () => {
-          switch (res.statusCode) {
-            case 200:
-            case 201:
-              resolve(receivedData)
-              break
-            case 401:
-              rejectWrapper('Authorization failure!')
-              break
-            default:
-              rejectWrapper(`Unexpected HTTP status code!`)
-              break
-          }
-        })
-      })
-
-      if (data !== undefined) {
-        request.write(data)
-      }
-
-      request.on('error', reject)
-      request.end()
     })
   }
 }
