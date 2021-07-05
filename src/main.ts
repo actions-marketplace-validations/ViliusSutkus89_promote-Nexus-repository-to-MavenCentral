@@ -1,4 +1,4 @@
-import {getInput, setFailed, setSecret} from '@actions/core'
+import {getInput, setFailed, setSecret, setOutput} from '@actions/core'
 import {Buffer} from 'buffer'
 import {SonatypeClient} from './SonatypeClient'
 
@@ -12,9 +12,10 @@ async function run(): Promise<void> {
   const repositoryURI = getInput('repositoryURI')
   try {
     const sc = new SonatypeClient(repositoryURI, authorizationHeader)
+    setOutput('artifacts', await sc.obtainArtifactURLs())
     await sc.sendPromoteRequest()
-  } catch (error) {
-    setFailed(error)
+  } catch (err) {
+    setFailed(err)
   }
 }
 

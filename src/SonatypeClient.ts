@@ -1,6 +1,7 @@
 import {getInput, debug, setSecret} from '@actions/core'
 import axios, {AxiosResponse} from 'axios'
 import {parseStringPromise} from 'xml2js'
+import {ParseApacheRecursive} from './ParseApacheRecursive'
 
 function getBooleanInput(inputName: string): boolean {
   switch (getInput(inputName).toLowerCase()) {
@@ -129,6 +130,46 @@ export class SonatypeClient {
       } catch (err) {
         const msg = `Failed to send promote request!\n${err.message}`
         reject(new Error(msg))
+      }
+    })
+  }
+
+  async obtainArtifactURLs(): Promise<string[]> {
+    return new Promise<string[]>(async (resolve, reject) => {
+      let sp: StagingProfileRepository
+      try {
+        sp = await this.initPromise
+      } catch (err) {
+        reject(err)
+        return
+      }
+
+      try {
+        const URLs: string[] = await ParseApacheRecursive(sp.repositoryURI)
+        let mavenURL = getInput('mavenCentralURL')
+        if (!mavenURL.endsWith('/')) {
+          mavenURL += '/'
+        }
+
+        const URLsRewritten = URLs.map(artifactURL => {
+          if (!artifactURL.startsWith(sp.repositoryURI)) {
+            throw new Error(
+              `Invalid URL received from Sonatype: ${artifactURL}`
+            )
+          }
+
+          artifactURL = artifactURL.substr(sp.repositoryURI.length)
+          if (artifactURL.startsWith('/')) {
+            artifactURL = artifactURL.substr(1)
+          }
+
+          return mavenURL + artifactURL
+        })
+        resolve(URLsRewritten)
+      } catch (err) {
+        const msg = `Failed to obtain final file list\n${err.message}`
+        reject(new Error(msg))
+        return
       }
     })
   }

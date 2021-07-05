@@ -14,14 +14,19 @@ inputs:
     required: true
     description: 'Password part of the access token generated in oss.sonatype.org'
 
+  mavenCentralURL:
+    required: false
+    description: 'Final resting place of published artifacts.'
+    default: 'https://repo1.maven.org/maven2/'
+
   printResponseBodyInErrors:
     required: false
-    description: 'Responses from Sonatype may contain sensitive data, should it be printed with errors?'
+    description: 'Responses from Sonatype may contain sensitive data, should it be printed when printing errors? May leak ProfileId.'
     default: 'false'
 
   censorProfileId:
     required: false
-    description: 'ProfileID may be sensitive data'
+    description: 'ProfileID may be sensitive data. Should it be censored when printing the debug log'
     default: 'true'
 
 runs:

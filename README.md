@@ -70,5 +70,6 @@ Required inputs are:
 - sonatypePassword: Password part of the access token generated in oss.sonatype.org
 
 Optional inputs are:
-- printResponseBodyInErrors: Responses from Sonatype may contain sensitive data, should it be printed when printing errors? Defaults to 'false' (yes, this is a string, not a boolean).
-- censorProfileId: ProfileID may be sensitive data. Should it be excluded from the debug log? Defaults to 'true' (yes, this is a string, not a boolean).
+- mavenCentralURL: Final resting place of published artifacts. Defaults to 'https://repo1.maven.org/maven2/'.
+- printResponseBodyInErrors: Responses from Sonatype may contain sensitive data, should it be printed when printing errors? May leak ProfileId. Defaults to 'false' (yes, this is a string, not a boolean).
+- censorProfileId: ProfileID may be sensitive data. Should it be censored when printing the debug log? Defaults to 'true' (yes, this is a string, not a boolean).
