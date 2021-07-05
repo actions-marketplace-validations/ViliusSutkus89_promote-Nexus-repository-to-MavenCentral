@@ -13,10 +13,18 @@ function getBooleanInput(inputName: string): boolean {
   return false
 }
 
+interface StagingProfileRepository {
+  readonly profileId: string
+  readonly type: string
+  readonly repositoryURI: string
+}
+
 export class SonatypeClient {
   private readonly sonatypeURI: string
   private readonly repositoryId: string
   private readonly authorizationHeader: string
+
+  private readonly initPromise: Promise<StagingProfileRepository>
 
   constructor(
     uriReturnedByGradleNexusPublishPlugin: string,
@@ -37,49 +45,92 @@ export class SonatypeClient {
 
     this.repositoryId = x[2]
     debug(`repositoryID: ${this.repositoryId}`)
-  }
 
-  private async getProfileId(): Promise<string> {
-    return new Promise<string>(async (resolve, reject) => {
-      try {
-        const uri = `${this.sonatypeURI}staging/repository/${this.repositoryId}`
-        const XMLData = await this.HTTPSRequest(uri, {
-          method: 'GET',
-          headers: {Authorization: this.authorizationHeader}
-        })
+    this.initPromise = new Promise<StagingProfileRepository>(
+      async (resolve, reject) => {
+        const url = `${this.sonatypeURI}staging/repository/${this.repositoryId}`
+        let XMLData
         try {
-          const responseObj = await parseStringPromise(XMLData)
-          const repo = responseObj['stagingProfileRepository']
-          resolve(repo['profileId'][0])
+          XMLData = await this.HTTPSRequest(url, {
+            method: 'GET',
+            headers: {Authorization: this.authorizationHeader}
+          })
         } catch (err) {
-          let msg = `Failed to parse response XML from ${uri}!\n${err.message}\n`
+          reject(err)
+          return
+        }
+
+        let responseObj
+        try {
+          responseObj = await parseStringPromise(XMLData)
+        } catch (err) {
+          let msg = `${url}: xml2js parser error!`
           if (getBooleanInput('printResponseBodyInErrors')) {
-            msg += XMLData
+            msg += `\n${err.message}\n${XMLData}`
+          }
+          reject(new Error(msg))
+          return
+        }
+
+        const censorProfileId = getBooleanInput('censorProfileId')
+        try {
+          const repo = responseObj['stagingProfileRepository']
+          if (censorProfileId) {
+            setSecret(repo['profileId'][0])
+          }
+
+          const sp: StagingProfileRepository = {
+            profileId: repo['profileId'][0],
+            type: repo['type'][0],
+            repositoryURI: repo['repositoryURI'][0]
+          }
+
+          if ('closed' !== sp.type.toLowerCase()) {
+            reject(new Error('Staging repository is not closed!'))
+            return
+          }
+
+          resolve(sp)
+        } catch (err) {
+          let msg = `${url}: Failed to parse response!`
+          if (getBooleanInput('printResponseBodyInErrors')) {
+            msg += `\n${err.message}\n`
+            msg += JSON.stringify(responseObj)
           }
           reject(new Error(msg))
         }
-      } catch (err) {
-        reject(err)
       }
-    })
+    )
   }
 
   async sendPromoteRequest(): Promise<void> {
-    const profileId = await this.getProfileId()
-    if (getBooleanInput('censorProfileId')) {
-      setSecret(profileId)
-    }
-    const uri = `${this.sonatypeURI}staging/profiles/${profileId}/promote`
-    const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`
-    const options = {
-      method: 'POST',
-      headers: {
-        Authorization: this.authorizationHeader,
-        'Content-Type': 'application/xml',
-        'Content-Length': POSTData.length
+    return new Promise<void>(async (resolve, reject) => {
+      let sp: StagingProfileRepository
+      try {
+        sp = await this.initPromise
+      } catch (err) {
+        reject(err)
+        return
       }
-    }
-    await this.HTTPSRequest(uri, options, POSTData)
+
+      const url = `${this.sonatypeURI}staging/profiles/${sp.profileId}/promote`
+      const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}111</stagedRepositoryId></data></promoteRequest>`
+      const options = {
+        headers: {
+          Authorization: this.authorizationHeader,
+          'Content-Type': 'application/xml',
+          'Content-Length': POSTData.length
+        }
+      }
+
+      try {
+        await this.HTTPSRequest(url, options, POSTData)
+        resolve()
+      } catch (err) {
+        const msg = `Failed to send promote request!\n${err.message}`
+        reject(new Error(msg))
+      }
+    })
   }
 
   private async HTTPSRequest(
