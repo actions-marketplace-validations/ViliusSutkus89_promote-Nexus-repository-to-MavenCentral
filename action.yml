@@ -29,6 +29,10 @@ inputs:
     description: 'ProfileID may be sensitive data. Should it be censored when printing the debug log'
     default: 'true'
 
+outputs:
+  artifacts:
+    description: 'JSON array of published artifact URLs'
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
