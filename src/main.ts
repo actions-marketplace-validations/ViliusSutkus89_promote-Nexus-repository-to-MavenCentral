@@ -9,15 +9,18 @@ import {Buffer} from 'buffer'
 import {SonatypeClient} from './SonatypeClient'
 
 async function run(): Promise<void> {
-  const user = getInput('sonatypeUsername')
-  const pass = getInput('sonatypePassword')
+  const user = getInput('sonatypeUsername', {required: true})
+  const pass = getInput('sonatypePassword', {required: true})
   const userPass = `${user}:${pass}`
   const userPassBase64 = Buffer.from(userPass).toString('base64')
   setSecret(userPassBase64)
   const authorizationHeader = `Basic ${userPassBase64}`
-  const repositoryURI = getInput('repositoryURI')
-  const printResponseBodyInErrors = getBooleanInput('printResponseBodyInErrors')
-  const censorProfileId = getBooleanInput('censorProfileId')
+  const repositoryURI = getInput('repositoryURI', {required: true})
+  const printResponseBodyInErrors = getBooleanInput(
+    'printResponseBodyInErrors',
+    {required: false}
+  )
+  const censorProfileId = getBooleanInput('censorProfileId', {required: false})
   try {
     const sc = new SonatypeClient(
       repositoryURI,
@@ -25,7 +28,7 @@ async function run(): Promise<void> {
       printResponseBodyInErrors,
       censorProfileId
     )
-    const mavenCentralURL = getInput('mavenCentralURL')
+    const mavenCentralURL = getInput('mavenCentralURL', {required: false})
     setOutput('artifacts', await sc.obtainArtifactURLs(mavenCentralURL))
     await sc.sendPromoteRequest()
   } catch (err) {
