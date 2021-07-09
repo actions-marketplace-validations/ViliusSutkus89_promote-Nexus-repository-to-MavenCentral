@@ -73,18 +73,8 @@ const core_1 = __webpack_require__(2186);
 const axios_1 = __importDefault(__webpack_require__(6545));
 const xml2js_1 = __webpack_require__(6189);
 const ParseApacheRecursive_1 = __webpack_require__(9457);
-function getBooleanInput(inputName) {
-    switch (core_1.getInput(inputName).toLowerCase()) {
-        case 'y':
-        case 'yes':
-        case '1':
-        case 'true':
-            return true;
-    }
-    return false;
-}
 class SonatypeClient {
-    constructor(uriReturnedByGradleNexusPublishPlugin, authorizationHeader) {
+    constructor(uriReturnedByGradleNexusPublishPlugin, authorizationHeader, printResponseBodyInErrors, censorProfileId) {
         this.authorizationHeader = authorizationHeader;
         const x = uriReturnedByGradleNexusPublishPlugin.match(/^(.+)repositories\/(.+)\/content\/?$/);
         if (x === null || 3 !== x.length) {
@@ -113,13 +103,12 @@ class SonatypeClient {
             }
             catch (err) {
                 let msg = `${url}: xml2js parser error!`;
-                if (getBooleanInput('printResponseBodyInErrors')) {
+                if (printResponseBodyInErrors) {
                     msg += `\n${err.message}\n${XMLData}`;
                 }
                 reject(new Error(msg));
                 return;
             }
-            const censorProfileId = getBooleanInput('censorProfileId');
             try {
                 const repo = responseObj['stagingProfileRepository'];
                 if (censorProfileId) {
@@ -138,7 +127,7 @@ class SonatypeClient {
             }
             catch (err) {
                 let msg = `${url}: Failed to parse response!`;
-                if (getBooleanInput('printResponseBodyInErrors')) {
+                if (printResponseBodyInErrors) {
                     msg += `\n${err.message}\n`;
                     msg += JSON.stringify(responseObj);
                 }
@@ -171,13 +160,12 @@ class SonatypeClient {
                     resolve();
                 }
                 catch (err) {
-                    const msg = `Failed to send promote request!\n${err.message}`;
-                    reject(new Error(msg));
+                    reject(new Error(`Failed to send promote request!\n${err.message}`));
                 }
             }));
         });
     }
-    obtainArtifactURLs() {
+    obtainArtifactURLs(mavenCentralURL) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 let sp;
@@ -190,9 +178,8 @@ class SonatypeClient {
                 }
                 try {
                     const URLs = yield ParseApacheRecursive_1.ParseApacheRecursive(sp.repositoryURI);
-                    let mavenURL = core_1.getInput('mavenCentralURL');
-                    if (!mavenURL.endsWith('/')) {
-                        mavenURL += '/';
+                    if (!mavenCentralURL.endsWith('/')) {
+                        mavenCentralURL += '/';
                     }
                     const URLsRewritten = URLs.map(artifactURL => {
                         if (!artifactURL.startsWith(sp.repositoryURI)) {
@@ -202,7 +189,7 @@ class SonatypeClient {
                         if (artifactURL.startsWith('/')) {
                             artifactURL = artifactURL.substr(1);
                         }
-                        return mavenURL + artifactURL;
+                        return mavenCentralURL + artifactURL;
                     });
                     resolve(URLsRewritten);
                 }
@@ -240,16 +227,19 @@ const buffer_1 = __webpack_require__(4293);
 const SonatypeClient_1 = __webpack_require__(1243);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = core_1.getInput('sonatypeUsername');
-        const pass = core_1.getInput('sonatypePassword');
+        const user = core_1.getInput('sonatypeUsername', { required: true });
+        const pass = core_1.getInput('sonatypePassword', { required: true });
         const userPass = `${user}:${pass}`;
         const userPassBase64 = buffer_1.Buffer.from(userPass).toString('base64');
         core_1.setSecret(userPassBase64);
         const authorizationHeader = `Basic ${userPassBase64}`;
-        const repositoryURI = core_1.getInput('repositoryURI');
+        const repositoryURI = core_1.getInput('repositoryURI', { required: true });
+        const printResponseBodyInErrors = core_1.getBooleanInput('printResponseBodyInErrors', { required: false });
+        const censorProfileId = core_1.getBooleanInput('censorProfileId', { required: false });
         try {
-            const sc = new SonatypeClient_1.SonatypeClient(repositoryURI, authorizationHeader);
-            core_1.setOutput('artifacts', yield sc.obtainArtifactURLs());
+            const sc = new SonatypeClient_1.SonatypeClient(repositoryURI, authorizationHeader, printResponseBodyInErrors, censorProfileId);
+            const mavenCentralURL = core_1.getInput('mavenCentralURL', { required: false });
+            core_1.setOutput('artifacts', yield sc.obtainArtifactURLs(mavenCentralURL));
             yield sc.sendPromoteRequest();
         }
         catch (err) {
