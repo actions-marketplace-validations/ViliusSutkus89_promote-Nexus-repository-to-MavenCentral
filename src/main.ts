@@ -1,4 +1,10 @@
-import {getInput, setFailed, setSecret, setOutput} from '@actions/core'
+import {
+  getInput,
+  getBooleanInput,
+  setFailed,
+  setSecret,
+  setOutput
+} from '@actions/core'
 import {Buffer} from 'buffer'
 import {SonatypeClient} from './SonatypeClient'
 
@@ -10,9 +16,17 @@ async function run(): Promise<void> {
   setSecret(userPassBase64)
   const authorizationHeader = `Basic ${userPassBase64}`
   const repositoryURI = getInput('repositoryURI')
+  const printResponseBodyInErrors = getBooleanInput('printResponseBodyInErrors')
+  const censorProfileId = getBooleanInput('censorProfileId')
   try {
-    const sc = new SonatypeClient(repositoryURI, authorizationHeader)
-    setOutput('artifacts', await sc.obtainArtifactURLs())
+    const sc = new SonatypeClient(
+      repositoryURI,
+      authorizationHeader,
+      printResponseBodyInErrors,
+      censorProfileId
+    )
+    const mavenCentralURL = getInput('mavenCentralURL')
+    setOutput('artifacts', await sc.obtainArtifactURLs(mavenCentralURL))
     await sc.sendPromoteRequest()
   } catch (err) {
     setFailed(err)

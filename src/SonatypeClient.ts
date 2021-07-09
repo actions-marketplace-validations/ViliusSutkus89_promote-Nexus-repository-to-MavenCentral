@@ -1,18 +1,7 @@
-import {getInput, debug, setSecret} from '@actions/core'
+import {debug, setSecret} from '@actions/core'
 import axios, {AxiosResponse} from 'axios'
 import {parseStringPromise} from 'xml2js'
 import {ParseApacheRecursive} from './ParseApacheRecursive'
-
-function getBooleanInput(inputName: string): boolean {
-  switch (getInput(inputName).toLowerCase()) {
-    case 'y':
-    case 'yes':
-    case '1':
-    case 'true':
-      return true
-  }
-  return false
-}
 
 interface StagingProfileRepository {
   readonly profileId: string
@@ -29,7 +18,9 @@ export class SonatypeClient {
 
   constructor(
     uriReturnedByGradleNexusPublishPlugin: string,
-    authorizationHeader: string
+    authorizationHeader: string,
+    printResponseBodyInErrors: boolean,
+    censorProfileId: boolean
   ) {
     this.authorizationHeader = authorizationHeader
 
@@ -66,14 +57,13 @@ export class SonatypeClient {
           responseObj = await parseStringPromise(XMLData)
         } catch (err) {
           let msg = `${url}: xml2js parser error!`
-          if (getBooleanInput('printResponseBodyInErrors')) {
+          if (printResponseBodyInErrors) {
             msg += `\n${err.message}\n${XMLData}`
           }
           reject(new Error(msg))
           return
         }
 
-        const censorProfileId = getBooleanInput('censorProfileId')
         try {
           const repo = responseObj['stagingProfileRepository']
           if (censorProfileId) {
@@ -94,7 +84,7 @@ export class SonatypeClient {
           resolve(sp)
         } catch (err) {
           let msg = `${url}: Failed to parse response!`
-          if (getBooleanInput('printResponseBodyInErrors')) {
+          if (printResponseBodyInErrors) {
             msg += `\n${err.message}\n`
             msg += JSON.stringify(responseObj)
           }
@@ -128,13 +118,12 @@ export class SonatypeClient {
         await axios.post(url, POSTData, options)
         resolve()
       } catch (err) {
-        const msg = `Failed to send promote request!\n${err.message}`
-        reject(new Error(msg))
+        reject(new Error(`Failed to send promote request!\n${err.message}`))
       }
     })
   }
 
-  async obtainArtifactURLs(): Promise<string[]> {
+  async obtainArtifactURLs(mavenCentralURL: string): Promise<string[]> {
     return new Promise<string[]>(async (resolve, reject) => {
       let sp: StagingProfileRepository
       try {
@@ -146,9 +135,9 @@ export class SonatypeClient {
 
       try {
         const URLs: string[] = await ParseApacheRecursive(sp.repositoryURI)
-        let mavenURL = getInput('mavenCentralURL')
-        if (!mavenURL.endsWith('/')) {
-          mavenURL += '/'
+
+        if (!mavenCentralURL.endsWith('/')) {
+          mavenCentralURL += '/'
         }
 
         const URLsRewritten = URLs.map(artifactURL => {
@@ -163,7 +152,7 @@ export class SonatypeClient {
             artifactURL = artifactURL.substr(1)
           }
 
-          return mavenURL + artifactURL
+          return mavenCentralURL + artifactURL
         })
         resolve(URLsRewritten)
       } catch (err) {
