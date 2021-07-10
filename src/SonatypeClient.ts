@@ -112,7 +112,7 @@ export class SonatypeClient {
       }
 
       const url = `${this.sonatypeURI}staging/profiles/${sp.profileId}/promote`
-      const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}111</stagedRepositoryId></data></promoteRequest>`
+      const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`
       const options = {
         headers: {
           Authorization: this.authorizationHeader,

@@ -97,7 +97,7 @@ class SonatypeClient {
             catch (err) {
                 let msg = `Failed to obtain staging profile repository!\n${err.message}`;
                 if (printResponseBodyInErrors) {
-                    msg += err.response.data;
+                    msg += `\n${err.response.data}`;
                 }
                 reject(new Error(msg));
                 return;
@@ -152,7 +152,7 @@ class SonatypeClient {
                     return;
                 }
                 const url = `${this.sonatypeURI}staging/profiles/${sp.profileId}/promote`;
-                const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}111</stagedRepositoryId></data></promoteRequest>`;
+                const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`;
                 const options = {
                     headers: {
                         Authorization: this.authorizationHeader,
