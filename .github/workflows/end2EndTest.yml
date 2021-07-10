@@ -32,8 +32,6 @@ jobs:
           ./ci-scripts/incrementVersion --minor 0
           ./ci-scripts/incrementVersion --patch $GITHUB_SHA
           perl -pe "s/rootProject\.name.*/rootProject.name = 'SampleLibraryForSonatypePromotionTesting'/" -i settings.gradle
-          cat build.gradle
-          cat settings.gradle
           ./gradlew assembleRelease
 
       - name: Publish to Sonatype
