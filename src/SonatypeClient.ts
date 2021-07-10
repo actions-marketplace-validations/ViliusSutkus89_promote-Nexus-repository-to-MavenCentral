@@ -16,6 +16,8 @@ export class SonatypeClient {
 
   private readonly initPromise: Promise<StagingProfileRepository>
 
+  private readonly printResponseBodyInErrors: boolean
+
   constructor(
     uriReturnedByGradleNexusPublishPlugin: string,
     authorizationHeader: string,
@@ -23,6 +25,7 @@ export class SonatypeClient {
     censorProfileId: boolean
   ) {
     this.authorizationHeader = authorizationHeader
+    this.printResponseBodyInErrors = printResponseBodyInErrors
 
     const x = uriReturnedByGradleNexusPublishPlugin.match(
       /^(.+)repositories\/(.+)\/content\/?$/
@@ -48,7 +51,11 @@ export class SonatypeClient {
           })
           XMLData = response.data
         } catch (err) {
-          reject(err)
+          let msg = `Failed to obtain staging profile repository!\n${err.message}`
+          if (printResponseBodyInErrors) {
+            msg += err.response.data
+          }
+          reject(new Error(msg))
           return
         }
 
@@ -118,7 +125,11 @@ export class SonatypeClient {
         await axios.post(url, POSTData, options)
         resolve()
       } catch (err) {
-        reject(new Error(`Failed to send promote request!\n${err.message}`))
+        let msg = `Failed to send promote request!\n${err.message}`
+        if (this.printResponseBodyInErrors) {
+          msg += err.response.data
+        }
+        reject(new Error(msg))
       }
     })
   }
