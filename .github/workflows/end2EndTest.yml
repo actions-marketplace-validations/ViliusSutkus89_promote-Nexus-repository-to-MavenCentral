@@ -54,8 +54,6 @@ jobs:
         # Created staging repository 'comviliussutkus89-1055' at https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1055/content/
         run: perl -ne 'print "::set-output name=stagingRepoURL::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
 
-      - run: sleep 60
-
       - name: Promote the library to Maven Central
         run: node dist/index.js
         env:
