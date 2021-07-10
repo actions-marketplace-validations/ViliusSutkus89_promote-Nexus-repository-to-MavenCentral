@@ -58,6 +58,6 @@ jobs:
           INPUT_SONATYPEUSERNAME: ${{ secrets.SONATYPE_USERNAME }}
           INPUT_SONATYPEPASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           INPUT_REPOSITORYURI: ${{ steps.sonatype.outputs.stagingRepoURL }}
-          INPUT_PRINTRESPONSEBODYINERRORS: true
+          INPUT_PRINTRESPONSEBODYINERRORS: false
           INPUT_CENSORPROFILEID: true
           INPUT_MAVENCENTRALURL: https://repo1.maven.org/maven2/
