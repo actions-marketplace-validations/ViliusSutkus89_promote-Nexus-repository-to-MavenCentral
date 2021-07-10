@@ -35,6 +35,8 @@ jobs:
           cat build.gradle
           cat settings.gradle
           ./gradlew assembleRelease
+        env:
+          GITHUB_SHA: ${{ env.GITHUB_SHA }}
 
       - name: Publish to Sonatype
         working-directory: SampleLib
