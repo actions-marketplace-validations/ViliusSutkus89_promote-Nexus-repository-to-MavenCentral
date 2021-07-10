@@ -14,3 +14,6 @@ jobs:
 
       - run: npm ci
       - run: npm run all
+
+      - name: Check if rebuild is needed
+        run: git diff --exit-code dist
