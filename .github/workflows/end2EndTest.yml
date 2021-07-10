@@ -1,0 +1,65 @@
+name: e2eTest
+on:
+  push:
+    branches: [main]
+
+jobs:
+  end2EndTest:
+    runs-on: ubuntu-latest
+    environment: e2eTestEnv
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: npm ci
+
+      - uses: actions/checkout@v2
+        with:
+          repository: ViliusSutkus89/Sample_Android_Library-MavenCentral-Instrumented_Tests
+          path: SampleLib
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: 8
+      - uses: android-actions/setup-android@v2
+
+      - name: Prepare and assemble library
+        working-directory: SampleLib
+        run: |
+          ./ci-scripts/incrementVersion --major 0
+          ./ci-scripts/incrementVersion --minor 0
+          ./ci-scripts/incrementVersion --patch ${{ env.GITHUB_SHA }}
+          perl -pe "s/rootProject\.name.*/rootProject.name = 'SampleLibraryForSonatypePromotionTesting'/" -i settings.gradle
+          cat build.gradle
+          cat settings.gradle
+          ./gradlew assembleRelease
+
+      - name: Publish to Sonatype
+        working-directory: SampleLib
+        run: ./gradlew publishToSonatype closeSonatypeStagingRepository | tee publishToSonatype.log
+        # bash has pipefail on by default, which is needed for tee to fail, if gradle fails
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASS: ${{ secrets.SIGNING_PASS }}
+
+      - name: Parse Sonatype repository
+        id: sonatype
+        working-directory: SampleLib
+        # publishToSonatype.log contains a line looking like this:
+        # Created staging repository 'comviliussutkus89-1055' at https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1055/content/
+        run: perl -ne 'print "::set-output name=stagingRepoURL::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
+
+      - name: Promote the library to Maven Central
+        run: node dist/index.js
+        env:
+          INPUT_SONATYPEUSERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          INPUT_SONATYPEPASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          INPUT_REPOSITORYURI: ${{ steps.sonatype.outputs.stagingRepoURL }}
+          INPUT_PRINTRESPONSEBODYINERRORS: false
+          INPUT_CENSORPROFILEID: true
+          INPUT_MAVENCENTRALURL: https://repo1.maven.org/maven2/
