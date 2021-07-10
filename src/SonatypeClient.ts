@@ -53,7 +53,7 @@ export class SonatypeClient {
         } catch (err) {
           let msg = `Failed to obtain staging profile repository!\n${err.message}`
           if (printResponseBodyInErrors) {
-            msg += err.response.data
+            msg += `\n${err.response.data}`
           }
           reject(new Error(msg))
           return
@@ -127,7 +127,7 @@ export class SonatypeClient {
       } catch (err) {
         let msg = `Failed to send promote request!\n${err.message}`
         if (this.printResponseBodyInErrors) {
-          msg += err.response.data
+          msg += `\n${err.response.data}`
         }
         reject(new Error(msg))
       }

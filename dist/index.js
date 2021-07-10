@@ -76,6 +76,7 @@ const ParseApacheRecursive_1 = __webpack_require__(9457);
 class SonatypeClient {
     constructor(uriReturnedByGradleNexusPublishPlugin, authorizationHeader, printResponseBodyInErrors, censorProfileId) {
         this.authorizationHeader = authorizationHeader;
+        this.printResponseBodyInErrors = printResponseBodyInErrors;
         const x = uriReturnedByGradleNexusPublishPlugin.match(/^(.+)repositories\/(.+)\/content\/?$/);
         if (x === null || 3 !== x.length) {
             throw new Error(`Failed to parse repository URI: ${uriReturnedByGradleNexusPublishPlugin}`);
@@ -94,7 +95,11 @@ class SonatypeClient {
                 XMLData = response.data;
             }
             catch (err) {
-                reject(err);
+                let msg = `Failed to obtain staging profile repository!\n${err.message}`;
+                if (printResponseBodyInErrors) {
+                    msg += err.response.data;
+                }
+                reject(new Error(msg));
                 return;
             }
             let responseObj;
@@ -160,7 +165,11 @@ class SonatypeClient {
                     resolve();
                 }
                 catch (err) {
-                    reject(new Error(`Failed to send promote request!\n${err.message}`));
+                    let msg = `Failed to send promote request!\n${err.message}`;
+                    if (this.printResponseBodyInErrors) {
+                        msg += `\n${err.response.data}`;
+                    }
+                    reject(new Error(msg));
                 }
             }));
         });
