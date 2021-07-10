@@ -30,13 +30,11 @@ jobs:
         run: |
           ./ci-scripts/incrementVersion --major 0
           ./ci-scripts/incrementVersion --minor 0
-          ./ci-scripts/incrementVersion --patch ${{ env.GITHUB_SHA }}
+          ./ci-scripts/incrementVersion --patch $GITHUB_SHA
           perl -pe "s/rootProject\.name.*/rootProject.name = 'SampleLibraryForSonatypePromotionTesting'/" -i settings.gradle
           cat build.gradle
           cat settings.gradle
           ./gradlew assembleRelease
-        env:
-          GITHUB_SHA: ${{ env.GITHUB_SHA }}
 
       - name: Publish to Sonatype
         working-directory: SampleLib
