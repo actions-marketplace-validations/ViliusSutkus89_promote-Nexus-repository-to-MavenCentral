@@ -7,6 +7,8 @@ jobs:
   end2EndTest:
     runs-on: ubuntu-latest
     environment: e2eTestEnv
+    outputs:
+      ARTIFACTS: ${{ steps.promote.outputs.artifacts }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -53,6 +55,7 @@ jobs:
         run: perl -ne 'print "::set-output name=stagingRepoURL::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
 
       - name: Promote the library to Maven Central
+        id: promote
         run: node dist/index.js
         env:
           INPUT_SONATYPEUSERNAME: ${{ secrets.SONATYPE_USERNAME }}
@@ -61,3 +64,11 @@ jobs:
           INPUT_PRINTRESPONSEBODYINERRORS: false
           INPUT_CENSORPROFILEID: true
           INPUT_MAVENCENTRALURL: https://repo1.maven.org/maven2/
+
+  waitForPropagation:
+    runs-on: ubuntu-latest
+    environment: fiveMinuteDelayEnvironment
+    needs: end2EndTest
+    steps:
+      - run: Wait for ${{ needs.end2EndTest.outputs.ARTIFACTS }}
+      - run: echo "TODO implement the actual wait!"
