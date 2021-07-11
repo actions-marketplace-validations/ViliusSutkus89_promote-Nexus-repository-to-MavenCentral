@@ -68,8 +68,10 @@ jobs:
 
   waitForPropagation:
     runs-on: ubuntu-latest
-    environment: fiveMinuteDelayEnvironment
+    # @TODO: reenable, after working confirmation
+    #environment: fiveMinuteDelayEnvironment
     needs: end2EndTest
     steps:
-      - run: Wait for ${{ needs.end2EndTest.outputs.ARTIFACTS }}
-      - run: echo "TODO implement the actual wait!"
+      - uses: ViliusSutkus89/WaitForURLsToBeAvailable@v1
+        with:
+          artifacts: ${{ needs.end2EndTest.outputs.ARTIFACTS }}
