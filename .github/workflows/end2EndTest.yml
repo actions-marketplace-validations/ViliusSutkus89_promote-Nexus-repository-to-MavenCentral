@@ -68,8 +68,7 @@ jobs:
 
   waitForPropagation:
     runs-on: ubuntu-latest
-    # @TODO: reenable, after working confirmation
-    #environment: fiveMinuteDelayEnvironment
+    environment: fiveMinuteDelayEnvironment
     needs: end2EndTest
     steps:
       - uses: ViliusSutkus89/WaitForURLsToBeAvailable@v1
