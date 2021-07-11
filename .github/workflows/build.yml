@@ -10,6 +10,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
+          # Node version 16 for building dist/index.js
           node-version: 16
 
       - run: npm ci
