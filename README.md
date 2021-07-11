@@ -15,11 +15,11 @@ Method of operation:
 ## Example workflow
 
 ```yaml
-name: buildMyLibrary
+name: buildMyProject
 on: push
 
 jobs:
-  build:
+  buildLibrary:
     environment: BuildWithDeployToSonatype
     outputs:
       STAGING_REPO_URL: ${{ steps.sonatype.outputs.stagingRepoUrl }}
@@ -53,7 +53,7 @@ jobs:
   releaseSonatype:
     # Different environment, for manual approval gate
     environment: ReleaseSonatype
-    needs: build
+    needs: buildLibrary
     runs-on: ubuntu-20.04
     outputs:
       ARTIFACTS: ${{ steps.promote.outputs.artifacts }}
@@ -61,7 +61,7 @@ jobs:
       - uses: ViliusSutkus89/promote-Nexus-repository-to-MavenCentral@v1
         id: promote
         with:
-          repositoryURL: ${{ needs.build.outputs.STAGING_REPO_URL }}
+          repositoryURL: ${{ needs.buildLibrary.outputs.STAGING_REPO_URL }}
           sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
           sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
 
