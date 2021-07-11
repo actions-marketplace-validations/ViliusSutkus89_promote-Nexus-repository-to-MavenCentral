@@ -71,6 +71,7 @@ jobs:
     environment: fiveMinuteDelayEnvironment
     needs: end2EndTest
     steps:
+      - run: echo ${{ needs.end2EndTest.outputs.ARTIFACTS }}
       - uses: ViliusSutkus89/WaitForURLsToBeAvailable@v1
         with:
           URLs: ${{ needs.end2EndTest.outputs.ARTIFACTS }}
