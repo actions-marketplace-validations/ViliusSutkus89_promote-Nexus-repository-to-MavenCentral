@@ -74,4 +74,4 @@ jobs:
     steps:
       - uses: ViliusSutkus89/WaitForURLsToBeAvailable@v1
         with:
-          artifacts: ${{ needs.end2EndTest.outputs.ARTIFACTS }}
+          URLs: ${{ needs.end2EndTest.outputs.ARTIFACTS }}
