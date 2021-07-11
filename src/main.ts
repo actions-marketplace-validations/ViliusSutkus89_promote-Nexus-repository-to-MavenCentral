@@ -9,18 +9,28 @@ import {Buffer} from 'buffer'
 import {SonatypeClient} from './SonatypeClient'
 
 async function run(): Promise<void> {
-  const user = getInput('sonatypeUsername', {required: true})
-  const pass = getInput('sonatypePassword', {required: true})
+  let user: string
+  let pass: string
+  let repositoryURL: string
+  let printResponseBodyInErrors: boolean
+  let censorProfileId: boolean
+  try {
+    user = getInput('sonatypeUsername', {required: true})
+    pass = getInput('sonatypePassword', {required: true})
+    repositoryURL = getInput('repositoryURL', {required: true})
+    printResponseBodyInErrors = getBooleanInput('printResponseBodyInErrors', {
+      required: false
+    })
+    censorProfileId = getBooleanInput('censorProfileId', {required: false})
+  } catch (err) {
+    setFailed(err)
+    return
+  }
+
   const userPass = `${user}:${pass}`
   const userPassBase64 = Buffer.from(userPass).toString('base64')
   setSecret(userPassBase64)
   const authorizationHeader = `Basic ${userPassBase64}`
-  const repositoryURL = getInput('repositoryURL', {required: true})
-  const printResponseBodyInErrors = getBooleanInput(
-    'printResponseBodyInErrors',
-    {required: false}
-  )
-  const censorProfileId = getBooleanInput('censorProfileId', {required: false})
   try {
     const sc = new SonatypeClient(
       repositoryURL,
@@ -33,6 +43,7 @@ async function run(): Promise<void> {
     await sc.sendPromoteRequest()
   } catch (err) {
     setFailed(err)
+    return
   }
 }
 

@@ -235,15 +235,28 @@ const buffer_1 = __nccwpck_require__(4293);
 const SonatypeClient_1 = __nccwpck_require__(1243);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const user = core_1.getInput('sonatypeUsername', { required: true });
-        const pass = core_1.getInput('sonatypePassword', { required: true });
+        let user;
+        let pass;
+        let repositoryURL;
+        let printResponseBodyInErrors;
+        let censorProfileId;
+        try {
+            user = core_1.getInput('sonatypeUsername', { required: true });
+            pass = core_1.getInput('sonatypePassword', { required: true });
+            repositoryURL = core_1.getInput('repositoryURL', { required: true });
+            printResponseBodyInErrors = core_1.getBooleanInput('printResponseBodyInErrors', {
+                required: false
+            });
+            censorProfileId = core_1.getBooleanInput('censorProfileId', { required: false });
+        }
+        catch (err) {
+            core_1.setFailed(err);
+            return;
+        }
         const userPass = `${user}:${pass}`;
         const userPassBase64 = buffer_1.Buffer.from(userPass).toString('base64');
         core_1.setSecret(userPassBase64);
         const authorizationHeader = `Basic ${userPassBase64}`;
-        const repositoryURL = core_1.getInput('repositoryURL', { required: true });
-        const printResponseBodyInErrors = core_1.getBooleanInput('printResponseBodyInErrors', { required: false });
-        const censorProfileId = core_1.getBooleanInput('censorProfileId', { required: false });
         try {
             const sc = new SonatypeClient_1.SonatypeClient(repositoryURL, authorizationHeader, printResponseBodyInErrors, censorProfileId);
             const mavenCentralURL = core_1.getInput('mavenCentralURL', { required: false });
@@ -252,6 +265,7 @@ function run() {
         }
         catch (err) {
             core_1.setFailed(err);
+            return;
         }
     });
 }
