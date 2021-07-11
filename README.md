@@ -55,12 +55,34 @@ jobs:
     environment: ReleaseSonatype
     needs: build
     runs-on: ubuntu-20.04
+    outputs:
+      ARTIFACTS: ${{ steps.promote.outputs.artifacts }}
     steps:
       - uses: ViliusSutkus89/promote-Nexus-repository-to-MavenCentral@v1
+        id: promote
         with:
           repositoryURI: ${{ needs.build.outputs.STAGING_REPO_URI }}
           sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
-          sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}  
+          sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+
+  buildApplication:
+    runs-on: ubuntu-latest
+    needs: releaseSonatype
+    steps:
+      - uses: ViliusSutkus89/WaitForURLsToBeAvailable@v1
+        with:
+          URLs: ${{ needs.releaseSonatype.outputs.ARTIFACTS }}
+
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: 8
+      - uses: android-actions/setup-android@v2
+
+      - name: Build application from released library
+        run: ./gradlew build
+        working-directory: application
 ```
 
 ## Inputs
