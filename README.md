@@ -22,7 +22,7 @@ jobs:
   build:
     environment: BuildWithDeployToSonatype
     outputs:
-      STAGING_REPO_URI: ${{ steps.sonatype.outputs.stagingRepoUri }}
+      STAGING_REPO_URL: ${{ steps.sonatype.outputs.stagingRepoUrl }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
         id: sonatype
         # publishToSonatype.log contains a line looking like this:
         # Created staging repository 'comviliussutkus89-1055' at https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1055/content/
-        run: perl -ne 'print "::set-output name=stagingRepoUri::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
+        run: perl -ne 'print "::set-output name=stagingRepoUrl::$1\n" if /^Created staging repository .+ at (.+)$/' < publishToSonatype.log
 
   releaseSonatype:
     # Different environment, for manual approval gate
@@ -61,7 +61,7 @@ jobs:
       - uses: ViliusSutkus89/promote-Nexus-repository-to-MavenCentral@v1
         id: promote
         with:
-          repositoryURI: ${{ needs.build.outputs.STAGING_REPO_URI }}
+          repositoryURL: ${{ needs.build.outputs.STAGING_REPO_URL }}
           sonatypeUsername: ${{ secrets.SONATYPE_USERNAME }}
           sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
 
@@ -89,7 +89,7 @@ jobs:
 #### Required inputs
 Name | Description
 --- | ---
-repositoryURI | Example URI - https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1208/content/ 
+repositoryURL | Example URL - https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1208/content/ 
 sonatypeUsername | Username part of the access token generated in oss.sonatype.org
 sonatypePassword | Password part of the access token generated in oss.sonatype.org
 

@@ -6,11 +6,11 @@ import {ParseApacheRecursive} from './ParseApacheRecursive'
 interface StagingProfileRepository {
   readonly profileId: string
   readonly type: string
-  readonly repositoryURI: string
+  readonly repositoryURL: string
 }
 
 export class SonatypeClient {
-  private readonly sonatypeURI: string
+  private readonly sonatypeURL: string
   private readonly repositoryId: string
   private readonly authorizationHeader: string
 
@@ -19,7 +19,7 @@ export class SonatypeClient {
   private readonly printResponseBodyInErrors: boolean
 
   constructor(
-    uriReturnedByGradleNexusPublishPlugin: string,
+    urlReturnedByGradleNexusPublishPlugin: string,
     authorizationHeader: string,
     printResponseBodyInErrors: boolean,
     censorProfileId: boolean
@@ -27,23 +27,23 @@ export class SonatypeClient {
     this.authorizationHeader = authorizationHeader
     this.printResponseBodyInErrors = printResponseBodyInErrors
 
-    const x = uriReturnedByGradleNexusPublishPlugin.match(
+    const x = urlReturnedByGradleNexusPublishPlugin.match(
       /^(.+)repositories\/(.+)\/content\/?$/
     )
     if (x === null || 3 !== x.length) {
       throw new Error(
-        `Failed to parse repository URI: ${uriReturnedByGradleNexusPublishPlugin}`
+        `Failed to parse repository URL: ${urlReturnedByGradleNexusPublishPlugin}`
       )
     }
-    this.sonatypeURI = x[1]
-    debug(`SonatypeURI: ${this.sonatypeURI}`)
+    this.sonatypeURL = x[1]
+    debug(`SonatypeURL: ${this.sonatypeURL}`)
 
     this.repositoryId = x[2]
     debug(`repositoryID: ${this.repositoryId}`)
 
     this.initPromise = new Promise<StagingProfileRepository>(
       async (resolve, reject) => {
-        const url = `${this.sonatypeURI}staging/repository/${this.repositoryId}`
+        const url = `${this.sonatypeURL}staging/repository/${this.repositoryId}`
         let XMLData
         try {
           const response: AxiosResponse = await axios.get(url, {
@@ -80,7 +80,7 @@ export class SonatypeClient {
           const sp: StagingProfileRepository = {
             profileId: repo['profileId'][0],
             type: repo['type'][0],
-            repositoryURI: repo['repositoryURI'][0]
+            repositoryURL: repo['repositoryURI'][0]
           }
 
           if ('closed' !== sp.type.toLowerCase()) {
@@ -111,7 +111,7 @@ export class SonatypeClient {
         return
       }
 
-      const url = `${this.sonatypeURI}staging/profiles/${sp.profileId}/promote`
+      const url = `${this.sonatypeURL}staging/profiles/${sp.profileId}/promote`
       const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`
       const options = {
         headers: {
@@ -145,20 +145,20 @@ export class SonatypeClient {
       }
 
       try {
-        const URLs: string[] = await ParseApacheRecursive(sp.repositoryURI)
+        const URLs: string[] = await ParseApacheRecursive(sp.repositoryURL)
 
         if (!mavenCentralURL.endsWith('/')) {
           mavenCentralURL += '/'
         }
 
         const URLsRewritten = URLs.map(artifactURL => {
-          if (!artifactURL.startsWith(sp.repositoryURI)) {
+          if (!artifactURL.startsWith(sp.repositoryURL)) {
             throw new Error(
               `Invalid URL received from Sonatype: ${artifactURL}`
             )
           }
 
-          artifactURL = artifactURL.substr(sp.repositoryURI.length)
+          artifactURL = artifactURL.substr(sp.repositoryURL.length)
           if (artifactURL.startsWith('/')) {
             artifactURL = artifactURL.substr(1)
           }

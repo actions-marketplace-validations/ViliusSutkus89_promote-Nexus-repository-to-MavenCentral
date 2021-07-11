@@ -15,7 +15,7 @@ async function run(): Promise<void> {
   const userPassBase64 = Buffer.from(userPass).toString('base64')
   setSecret(userPassBase64)
   const authorizationHeader = `Basic ${userPassBase64}`
-  const repositoryURI = getInput('repositoryURI', {required: true})
+  const repositoryURL = getInput('repositoryURL', {required: true})
   const printResponseBodyInErrors = getBooleanInput(
     'printResponseBodyInErrors',
     {required: false}
@@ -23,7 +23,7 @@ async function run(): Promise<void> {
   const censorProfileId = getBooleanInput('censorProfileId', {required: false})
   try {
     const sc = new SonatypeClient(
-      repositoryURI,
+      repositoryURL,
       authorizationHeader,
       printResponseBodyInErrors,
       censorProfileId

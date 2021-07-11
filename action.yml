@@ -2,7 +2,7 @@ name: 'promote-Nexus-repository-to-MavenCentral'
 description: 'Promote a staging Nexus repository to MavenCentral'
 author: "Vilius Sutkus '89"
 inputs:
-  repositoryURI:
+  repositoryURL:
     required: true
     description: 'Example: https://oss.sonatype.org/service/local/repositories/comviliussutkus89-1208/content/'
 

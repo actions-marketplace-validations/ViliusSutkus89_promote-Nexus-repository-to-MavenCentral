@@ -73,19 +73,19 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
 const xml2js_1 = __nccwpck_require__(6189);
 const ParseApacheRecursive_1 = __nccwpck_require__(9457);
 class SonatypeClient {
-    constructor(uriReturnedByGradleNexusPublishPlugin, authorizationHeader, printResponseBodyInErrors, censorProfileId) {
+    constructor(urlReturnedByGradleNexusPublishPlugin, authorizationHeader, printResponseBodyInErrors, censorProfileId) {
         this.authorizationHeader = authorizationHeader;
         this.printResponseBodyInErrors = printResponseBodyInErrors;
-        const x = uriReturnedByGradleNexusPublishPlugin.match(/^(.+)repositories\/(.+)\/content\/?$/);
+        const x = urlReturnedByGradleNexusPublishPlugin.match(/^(.+)repositories\/(.+)\/content\/?$/);
         if (x === null || 3 !== x.length) {
-            throw new Error(`Failed to parse repository URI: ${uriReturnedByGradleNexusPublishPlugin}`);
+            throw new Error(`Failed to parse repository URL: ${urlReturnedByGradleNexusPublishPlugin}`);
         }
-        this.sonatypeURI = x[1];
-        core_1.debug(`SonatypeURI: ${this.sonatypeURI}`);
+        this.sonatypeURL = x[1];
+        core_1.debug(`SonatypeURL: ${this.sonatypeURL}`);
         this.repositoryId = x[2];
         core_1.debug(`repositoryID: ${this.repositoryId}`);
         this.initPromise = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            const url = `${this.sonatypeURI}staging/repository/${this.repositoryId}`;
+            const url = `${this.sonatypeURL}staging/repository/${this.repositoryId}`;
             let XMLData;
             try {
                 const response = yield axios_1.default.get(url, {
@@ -121,7 +121,7 @@ class SonatypeClient {
                 const sp = {
                     profileId: repo['profileId'][0],
                     type: repo['type'][0],
-                    repositoryURI: repo['repositoryURI'][0]
+                    repositoryURL: repo['repositoryURI'][0]
                 };
                 if ('closed' !== sp.type.toLowerCase()) {
                     reject(new Error('Staging repository is not closed!'));
@@ -150,7 +150,7 @@ class SonatypeClient {
                     reject(err);
                     return;
                 }
-                const url = `${this.sonatypeURI}staging/profiles/${sp.profileId}/promote`;
+                const url = `${this.sonatypeURL}staging/profiles/${sp.profileId}/promote`;
                 const POSTData = `<promoteRequest><data><stagedRepositoryId>${this.repositoryId}</stagedRepositoryId></data></promoteRequest>`;
                 const options = {
                     headers: {
@@ -185,15 +185,15 @@ class SonatypeClient {
                     return;
                 }
                 try {
-                    const URLs = yield ParseApacheRecursive_1.ParseApacheRecursive(sp.repositoryURI);
+                    const URLs = yield ParseApacheRecursive_1.ParseApacheRecursive(sp.repositoryURL);
                     if (!mavenCentralURL.endsWith('/')) {
                         mavenCentralURL += '/';
                     }
                     const URLsRewritten = URLs.map(artifactURL => {
-                        if (!artifactURL.startsWith(sp.repositoryURI)) {
+                        if (!artifactURL.startsWith(sp.repositoryURL)) {
                             throw new Error(`Invalid URL received from Sonatype: ${artifactURL}`);
                         }
-                        artifactURL = artifactURL.substr(sp.repositoryURI.length);
+                        artifactURL = artifactURL.substr(sp.repositoryURL.length);
                         if (artifactURL.startsWith('/')) {
                             artifactURL = artifactURL.substr(1);
                         }
@@ -241,11 +241,11 @@ function run() {
         const userPassBase64 = buffer_1.Buffer.from(userPass).toString('base64');
         core_1.setSecret(userPassBase64);
         const authorizationHeader = `Basic ${userPassBase64}`;
-        const repositoryURI = core_1.getInput('repositoryURI', { required: true });
+        const repositoryURL = core_1.getInput('repositoryURL', { required: true });
         const printResponseBodyInErrors = core_1.getBooleanInput('printResponseBodyInErrors', { required: false });
         const censorProfileId = core_1.getBooleanInput('censorProfileId', { required: false });
         try {
-            const sc = new SonatypeClient_1.SonatypeClient(repositoryURI, authorizationHeader, printResponseBodyInErrors, censorProfileId);
+            const sc = new SonatypeClient_1.SonatypeClient(repositoryURL, authorizationHeader, printResponseBodyInErrors, censorProfileId);
             const mavenCentralURL = core_1.getInput('mavenCentralURL', { required: false });
             core_1.setOutput('artifacts', yield sc.obtainArtifactURLs(mavenCentralURL));
             yield sc.sendPromoteRequest();
