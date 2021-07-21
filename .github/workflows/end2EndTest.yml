@@ -43,9 +43,7 @@ jobs:
       - name: Prepare and assemble library
         working-directory: SampleLib
         run: |
-          ./ci-scripts/incrementVersion --major 0
-          ./ci-scripts/incrementVersion --minor 0
-          ./ci-scripts/incrementVersion --patch $GITHUB_SHA
+          ./ci-scripts/incrementVersion 0.${GITHUB_SHA}.1 99
           perl -pe "s/rootProject\.name.*/rootProject.name = 'SampleLibraryForSonatypePromotionTesting'/" -i settings.gradle
           ./gradlew assembleRelease
 
