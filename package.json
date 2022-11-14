@@ -25,7 +25,7 @@
   "author": "Vilius Sutkus <ViliusSutkus89@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.4.0",
+    "@actions/core": "^1.10.0",
     "axios": "^0.21.1",
     "Buffer": "0.0.0",
     "parse-apache-directory-index": "^2.1.0",
