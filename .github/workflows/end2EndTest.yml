@@ -23,7 +23,7 @@ jobs:
       ARTIFACTS: ${{ steps.promote.outputs.artifacts }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           # Node version 12 for executing dist/index.js, to match node version in action.yml
           node-version: 12
