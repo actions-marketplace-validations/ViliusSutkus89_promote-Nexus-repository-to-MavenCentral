@@ -22,14 +22,14 @@ jobs:
     outputs:
       ARTIFACTS: ${{ steps.promote.outputs.artifacts }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
         with:
           # Node version 12 for executing dist/index.js, to match node version in action.yml
           node-version: 12
       - run: npm ci
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: ViliusSutkus89/Sample_Android_Library-MavenCentral-Instrumented_Tests
           path: SampleLib
